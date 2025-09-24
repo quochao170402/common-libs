@@ -1,28 +1,28 @@
-name: Publish npm Package
-on:
-  workflow_call:
-    inputs:
-      package:
-        required: true
-        type: string
-      version:
-        required: true
-        type: string
+# name: Publish npm Package
+# on:
+#   workflow_call:
+#     inputs:
+#       package:
+#         required: true
+#         type: string
+#       version:
+#         required: true
+#         type: string
 
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://npm.pkg.github.com'
+# jobs:
+#   publish:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-node@v4
+#         with:
+#           node-version: '20'
+#           registry-url: 'https://npm.pkg.github.com'
 
-      - name: Publish
-        working-directory: ${{ inputs.package }}
-        run: |
-          npm version ${{ inputs.version }} --no-git-tag-version
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#       - name: Publish
+#         working-directory: ${{ inputs.package }}
+#         run: |
+#           npm version ${{ inputs.version }} --no-git-tag-version
+#           npm publish --access public
+#         env:
+#           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

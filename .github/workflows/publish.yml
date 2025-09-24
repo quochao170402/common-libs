@@ -1,4 +1,6 @@
-name: Publish Package
+
+name: Publish Packages
+
 run-name: Publish package by @${{ github.actor }}
 permissions:
   contents: write # allow committing/tags if you need it
@@ -13,11 +15,8 @@ on:
         type: choice
         options:
           - dotnet/Common.Observability
-          - dotnet/Messing.Nuget
-          - nest/observability-npm
-          - nest/messing-npm
       version:
-        description: "Version to publish (e.g. 1.2.3)"
+        description: "Version to publish (e.g. 1.0.1)"
         required: true
         type: string
 
@@ -47,10 +46,10 @@ jobs:
       package: ${{ github.event.inputs.package }}
       version: ${{ github.event.inputs.version }}
 
-  call-npm:
-    if: needs.decide.outputs.type == 'npm'
-    needs: decide
-    uses: ./.github/workflows/publish-npm.yml
-    with:
-      package: ${{ github.event.inputs.package }}
-      version: ${{ github.event.inputs.version }}
+  # call-npm:
+  #   if: needs.decide.outputs.type == 'npm'
+  #   needs: decide
+  #   uses: ./.github/workflows/publish-npm.yml
+  #   with:
+  #     package: ${{ github.event.inputs.package }}
+  #     version: ${{ github.event.inputs.version }}
