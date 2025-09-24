@@ -52,7 +52,6 @@ jobs:
         run: |
           dotnet restore
           dotnet build -c Release
-          rm -f bin/Release/*.nupkg   # remove old packages
           dotnet pack -c Release /p:PackageVersion=${{ github.event.inputs.version }} --no-build
           dotnet nuget push "bin/Release/${{ github.event.inputs.packageName }}.${{ github.event.inputs.version }}.nupkg" \
             --api-key ${{ secrets.GITHUB_TOKEN }} \
