@@ -51,6 +51,7 @@ jobs:
         working-directory: ${{ github.event.inputs.package }}
         run: |
           dotnet restore
+          dotnet build -c Release
           dotnet pack -c Release /p:PackageVersion=${{ github.event.inputs.version }}
           dotnet nuget push "bin/Release/*.nupkg" \
             --api-key ${{ secrets.GITHUB_TOKEN }} \
