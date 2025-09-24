@@ -56,8 +56,8 @@ jobs:
           dotnet pack -c Release /p:PackageVersion=${{ github.event.inputs.version }} --no-build
           dotnet nuget push "bin/Release/*.nupkg" \
             --api-key ${{ secrets.GITHUB_TOKEN }} \
-            --source "github"
-      
+            --source "https://nuget.pkg.github.com/quochao170402/index.json"
+
       
       
       # 4️⃣  npm package build & publish
