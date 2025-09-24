@@ -56,9 +56,7 @@ jobs:
           dotnet build -c Release
           rm -f bin/Release/*.nupkg          # clean old
           dotnet pack -c Release /p:PackageVersion=${{ github.event.inputs.version }} --no-build
-          dotnet nuget push "bin/Release/*.nupkg" \
-          --api-key ${{ secrets.GH_PACKAGES_PAT }} \
-          --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+          dotnet nuget push "bin/Release/*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
 
 
       
