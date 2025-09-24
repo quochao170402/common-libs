@@ -46,17 +46,19 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Pack & publish NuGet
+      - name: Build & Pack NuGet
         if: steps.detect.outputs.type == 'dotnet'
         working-directory: ${{ github.event.inputs.package }}
         run: |
           dotnet restore
           dotnet build -c Release
-          dotnet pack -c Release /p:PackageVersion=${{ github.event.inputs.version }}
-          dotnet nuget push "bin/Release/*.nupkg" \
+          rm -f bin/Release/*.nupkg   # remove old packages
+          dotnet pack -c Release /p:PackageVersion=${{ github.event.inputs.version }} --no-build
+          dotnet nuget push "bin/Release/${{ github.event.inputs.packageName }}.${{ github.event.inputs.version }}.nupkg" \
             --api-key ${{ secrets.GITHUB_TOKEN }} \
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
-
+      
+      
       # 4️⃣  npm package build & publish
       - name: Setup Node
         if: steps.detect.outputs.type == 'npm'
