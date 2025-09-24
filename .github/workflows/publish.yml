@@ -42,7 +42,7 @@ jobs:
   call-dotnet:
     if: needs.decide.outputs.type == 'dotnet'
     needs: decide
-    uses: ./.github/workflows/publish-dotnet.yml
+    uses: ./.github/cicd/publish-dotnet.yml
     with:
       package: ${{ github.event.inputs.package }}
       version: ${{ github.event.inputs.version }}
@@ -50,7 +50,7 @@ jobs:
   call-npm:
     if: needs.decide.outputs.type == 'npm'
     needs: decide
-    uses: ./.github/workflows/publish-npm.yml
+    uses: ./.github/cicd/publish-npm.yml
     with:
       package: ${{ github.event.inputs.package }}
       version: ${{ github.event.inputs.version }}
