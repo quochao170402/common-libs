@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dotnet", "dotnet", "{9BD00AEE-B457-8A53-4987-79B2CE11DF4C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Observability", "Common.Observability\Common.Observability.csproj", "{1E4B13AB-E7A9-4A7F-B82F-85D557BB6FF7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1E4B13AB-E7A9-4A7F-B82F-85D557BB6FF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E4B13AB-E7A9-4A7F-B82F-85D557BB6FF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E4B13AB-E7A9-4A7F-B82F-85D557BB6FF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E4B13AB-E7A9-4A7F-B82F-85D557BB6FF7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1E4B13AB-E7A9-4A7F-B82F-85D557BB6FF7} = {9BD00AEE-B457-8A53-4987-79B2CE11DF4C}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {414D94CF-137C-46D3-AD4F-153B3A2FC944}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,103 @@
+name: Publish package
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish (relative path from repo root)'
+        required: true
+        type: choice
+        options:
+          - dotnet/Common.Observability
+          - dotnet/Messing.Nuget
+          - nest/observability-npm
+          - nest/messing-npm
+      version_bump:
+        description: 'Version bump type (skip to keep current)'
+        required: false
+        default: 'none'
+        type: choice
+        options:
+          - none
+          - patch
+          - minor
+          - major
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Git user (for version bump commits)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine package type
+        id: detect
+        run: |
+          if [[ "${{ github.event.inputs.package }}" == dotnet/* ]]; then
+            echo "type=dotnet" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event.inputs.package }}" == nest/* ]]; then
+            echo "type=npm" >> $GITHUB_OUTPUT
+          else
+            echo "Unknown package type"; exit 1
+          fi
+
+      # ---------- Optional version bump ----------
+      - name: Bump version (dotnet)
+        if: steps.detect.outputs.type == 'dotnet' && github.event.inputs.version_bump != 'none'
+        working-directory: ${{ github.event.inputs.package }}
+        run: |
+          dotnet tool install --global dotnet-version-cli --version 1.*
+          export PATH="$PATH:~/.dotnet/tools"
+          dotnet version ${{ github.event.inputs.version_bump }} --skip-commit
+
+      - name: Bump version (npm)
+        if: steps.detect.outputs.type == 'npm' && github.event.inputs.version_bump != 'none'
+        working-directory: ${{ github.event.inputs.package }}
+        run: |
+          npm version ${{ github.event.inputs.version_bump }} --no-git-tag-version
+
+      - name: Commit version bump
+        if: github.event.inputs.version_bump != 'none'
+        run: |
+          git add ${{ github.event.inputs.package }}
+          git commit -m "chore: bump ${{ github.event.inputs.package }} version [skip ci]"
+          git push
+
+      # ---------- Publish .NET NuGet ----------
+      - name: Setup .NET
+        if: steps.detect.outputs.type == 'dotnet'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Publish NuGet to GitHub Packages
+        if: steps.detect.outputs.type == 'dotnet'
+        working-directory: ${{ github.event.inputs.package }}
+        run: |
+          dotnet pack -c Release
+          dotnet nuget push "bin/Release/*.nupkg" \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      # ---------- Publish NPM ----------
+      - name: Setup Node.js
+        if: steps.detect.outputs.type == 'npm'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://npm.pkg.github.com'
+
+      - name: Publish NPM to GitHub Packages
+        if: steps.detect.outputs.type == 'npm'
+        working-directory: ${{ github.event.inputs.package }}
+        run: |
+          npm install
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

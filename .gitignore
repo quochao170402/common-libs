@@ -1,0 +1,58 @@
+### .NET ###
+
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.vsp
+*.vspx
+*.pidb
+*.svclog
+*.pdb
+*.dll
+*.exe
+*.log
+*.cache
+*.ide
+*.csproj.user
+*.vs/
+TestResult*/
+artifacts/
+*.nupkg
+*.snupkg
+
+### Node / NestJS ###
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+.pnpm-lock.yaml
+
+### Build / Coverage ###
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+### Environment & Secrets ###
+.env
+.env.*.local
+*.local
+
+### IDE / OS ###
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+*.iml
+*.orig
+
+### Misc ###
+# ignore generated docs or temp files
+docs/_build/
