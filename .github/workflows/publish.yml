@@ -30,10 +30,14 @@ jobs:
       - uses: actions/checkout@v4
       - id: detect
         run: |
-          if [ -f "${{ github.event.inputs.package }}/package.json" ]; then
-            echo "type=npm" >> "$GITHUB_OUTPUT"
-          elif ls "${{ github.event.inputs.package }}"/*.csproj >/dev/null 2>&1; then
+          pkg="${{ github.event.inputs.package }}"
+          # Grab the first path segment (before the first /)
+          top="${pkg%%/*}"
+
+          if [ "$top" = "dotnet" ]; then
             echo "type=dotnet" >> "$GITHUB_OUTPUT"
+          elif [ "$top" = "nest" ] || [ "$top" = "npm" ] || [ "$top" = "node" ]; then
+            echo "type=npm" >> "$GITHUB_OUTPUT"
           else
             echo "type=unknown" >> "$GITHUB_OUTPUT"
             exit 1
@@ -46,7 +50,7 @@ jobs:
     with:
       package: ${{ github.event.inputs.package }}
       version: ${{ github.event.inputs.version }}
-  
+
   call-npm:
     if: needs.decide.outputs.type == 'npm'
     needs: decide
