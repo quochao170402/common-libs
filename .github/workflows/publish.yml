@@ -1,7 +1,7 @@
-
 name: Publish Packages
 
-run-name: Publish package by @${{ github.actor }}
+run-name: Publish package ${{ github.event.inputs.package  }} by @${{ github.actor }}
+
 permissions:
   contents: write # allow committing/tags if you need it
   packages: write # allow pushing packages using GITHUB_TOKEN

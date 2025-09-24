@@ -19,14 +19,32 @@ namespace Common.Observability;
 public static class ObservabilityExtension
 {
     /// <summary>
-    /// Adds OpenTelemetry services (tracing, metrics, and logging) to the DI container.
-    /// Reads configuration from <see cref="ObservabilityOptions"/> and wires up exporters
-    /// to the specified OpenTelemetry Collector, including optional Sentry integration.
+    /// Adds OpenTelemetry services—tracing, metrics, and logging—to the
+    /// application's dependency injection container.
     /// </summary>
-    /// <param name="services">The service collection to extend.</param>
-    /// <param name="openTelemetryOptions">Settings that control exporters,
-    /// service name/version, and environment flags.</param>
-    /// <returns>The same <see cref="IServiceCollection"/> instance for chaining.</returns>
+    /// <param name="services">
+    /// The <see cref="IServiceCollection"/> to extend.
+    /// </param>
+    /// <param name="openTelemetryOptions">
+    /// Settings that control exporters, service name/version, and environment flags.
+    /// Bind this from configuration using <see cref="ObservabilityOptions"/>.
+    /// </param>
+    /// <returns>
+    /// The same <see cref="IServiceCollection"/> instance for chaining calls.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This method wires up:
+    /// <list type="bullet">
+    /// <item>Tracing with ASP.NET Core, HttpClient, Entity Framework Core, and MassTransit instrumentation.</item>
+    /// <item>Metrics for runtime, process, and HTTP client.</item>
+    /// <item>Logging with OTLP exporter support.</item>
+    /// <item>Optional Sentry span/exporter integration if enabled in <paramref name="openTelemetryOptions"/>.</item>
+    /// </list>
+    /// Exporters are configured to send data to the specified OpenTelemetry Collector
+    /// using gRPC and optional basic authentication.
+    /// </para>
+    /// </remarks>
     public static IServiceCollection AddObservability(
         this IServiceCollection services,
         ObservabilityOptions openTelemetryOptions)
@@ -105,6 +123,32 @@ public static class ObservabilityExtension
     }
 
 
+    /// <summary>
+    /// Registers Sentry as an <see cref="ILoggerProvider"/> for the application's logging pipeline.
+    /// </summary>
+    /// <param name="logging">
+    /// The <see cref="ILoggingBuilder"/> to extend.
+    /// </param>
+    /// <param name="options">
+    /// Strongly-typed <see cref="SentryMonitorOptions"/> containing the Sentry DSN,
+    /// log-level filters, sampling rates, and other configuration settings.
+    /// </param>
+    /// <returns>
+    /// The same <see cref="ILoggingBuilder"/> instance for chaining.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This method maps values from <paramref name="options"/> to
+    /// <see cref="Sentry.SentryOptions"/> to configure:
+    /// <list type="bullet">
+    /// <item>Sentry DSN and environment information.</item>
+    /// <item>Minimum log levels for events and breadcrumbs.</item>
+    /// <item>Optional performance tracing and sample rates.</item>
+    /// <item>Stacktrace attachment, shutdown timeout, and PII preferences.</item>
+    /// <item>Optional forwarding of OpenTelemetry spans to Sentry.</item>
+    /// </list>
+    /// </para>
+    /// </remarks>
     public static ILoggingBuilder AddSentryMonitor(
         this ILoggingBuilder logging,
         SentryMonitorOptions options)
@@ -117,7 +161,7 @@ public static class ObservabilityExtension
             {
                 sentryOpts.Dsn = options.Dsn;
             }
-            
+
             sentryOpts.Debug = options.Debug;
 
             sentryOpts.MinimumEventLevel = options.MinimumEventLevel;
@@ -151,8 +195,8 @@ public static class ObservabilityExtension
             {
                 sentryOpts.UseOpenTelemetry();
             }
-            
-            
+
+
         });
 
         return logging;
