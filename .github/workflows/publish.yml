@@ -8,20 +8,14 @@ on:
         required: true
         type: choice
         options:
-          - dotnet/Common.Observability
+          - dotnet/Observability.Nuget
           - dotnet/Messing.Nuget
           - nest/observability-npm
           - nest/messing-npm
-      version_bump:
-        description: 'Version bump type (skip to keep current)'
-        required: false
-        default: 'none'
-        type: choice
-        options:
-          - none
-          - patch
-          - minor
-          - major
+      version:
+        description: 'Exact version to publish (e.g. 1.2.3)'
+        required: true
+        type: string
 
 jobs:
   publish:
@@ -31,12 +25,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Git user (for version bump commits)
+      - name: Setup Git user (for version commit)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Determine package type
+      - name: Detect package type
         id: detect
         run: |
           if [[ "${{ github.event.inputs.package }}" == dotnet/* ]]; then
@@ -47,26 +41,28 @@ jobs:
             echo "Unknown package type"; exit 1
           fi
 
-      # ---------- Optional version bump ----------
-      - name: Bump version (dotnet)
-        if: steps.detect.outputs.type == 'dotnet' && github.event.inputs.version_bump != 'none'
+      # ---------- Set version manually ----------
+      - name: Set .NET version
+        if: steps.detect.outputs.type == 'dotnet'
         working-directory: ${{ github.event.inputs.package }}
         run: |
+          # update <Version> tag in the main csproj
+          csproj=$(find . -maxdepth 1 -name "*.csproj" | head -n1)
+          echo "Updating $csproj to version ${{ github.event.inputs.version }}"
           dotnet tool install --global dotnet-version-cli --version 1.*
           export PATH="$PATH:~/.dotnet/tools"
-          dotnet version ${{ github.event.inputs.version_bump }} --skip-commit
+          dotnet version set ${{ github.event.inputs.version }} --file "$csproj" --skip-commit
 
-      - name: Bump version (npm)
-        if: steps.detect.outputs.type == 'npm' && github.event.inputs.version_bump != 'none'
+      - name: Set npm version
+        if: steps.detect.outputs.type == 'npm'
         working-directory: ${{ github.event.inputs.package }}
         run: |
-          npm version ${{ github.event.inputs.version_bump }} --no-git-tag-version
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
 
-      - name: Commit version bump
-        if: github.event.inputs.version_bump != 'none'
+      - name: Commit version change
         run: |
           git add ${{ github.event.inputs.package }}
-          git commit -m "chore: bump ${{ github.event.inputs.package }} version [skip ci]"
+          git commit -m "chore: set ${{ github.event.inputs.package }} version to ${{ github.event.inputs.version }} [skip ci]"
           git push
 
       # ---------- Publish .NET NuGet ----------
@@ -80,7 +76,7 @@ jobs:
         if: steps.detect.outputs.type == 'dotnet'
         working-directory: ${{ github.event.inputs.package }}
         run: |
-          dotnet pack -c Release
+          dotnet pack -c Release /p:PackageVersion=${{ github.event.inputs.version }}
           dotnet nuget push "bin/Release/*.nupkg" \
             --api-key ${{ secrets.GITHUB_TOKEN }} \
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
@@ -93,7 +89,7 @@ jobs:
           node-version: '20'
           registry-url: 'https://npm.pkg.github.com'
 
-      - name: Publish NPM to GitHub Packages
+      - name: Publish to GitHub npm registry
         if: steps.detect.outputs.type == 'npm'
         working-directory: ${{ github.event.inputs.package }}
         run: |
