@@ -1,4 +1,5 @@
 name: Publish .NET Package
+
 on:
   workflow_call:
     inputs:

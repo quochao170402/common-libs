@@ -45,11 +45,3 @@ jobs:
     with:
       package: ${{ github.event.inputs.package }}
       version: ${{ github.event.inputs.version }}
-
-  # call-npm:
-  #   if: needs.decide.outputs.type == 'npm'
-  #   needs: decide
-  #   uses: ./.github/workflows/publish-npm.yml
-  #   with:
-  #     package: ${{ github.event.inputs.package }}
-  #     version: ${{ github.event.inputs.version }}
