@@ -4,17 +4,13 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-
         <PackageId>Common.Observability</PackageId>
-        <Version>1.0.0</Version>
         <Authors>QuocHao</Authors>
         <Description>Observability extensions with OpenTelemetry and Sentry integration.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/quochao170402/Common.Observability.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageProjectUrl>https://github.com/quochao170402/Common.Observability.git</PackageProjectUrl>
-
-        <!-- Ensure NuGet package is created on build -->
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 
     </PropertyGroup>

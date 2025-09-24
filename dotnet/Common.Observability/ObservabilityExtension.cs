@@ -190,13 +190,10 @@ public static class ObservabilityExtension
                 sentryOpts.ShutdownTimeout = options.ShutdownTimeout.Value;
             }
 
-
             if (options.EnableOpenTelemetry)
             {
                 sentryOpts.UseOpenTelemetry();
             }
-
-
         });
 
         return logging;
