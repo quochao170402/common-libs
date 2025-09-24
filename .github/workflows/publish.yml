@@ -8,7 +8,7 @@ on:
         required: true
         type: choice
         options:
-          - dotnet/Observability.Nuget
+          - dotnet/Common.Observability
           - dotnet/Messing.Nuget
           - nest/observability-npm
           - nest/messing-npm
