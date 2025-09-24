@@ -15,6 +15,7 @@ on:
         type: choice
         options:
           - dotnet/Common.Observability
+          - npm/common-observability
       version:
         description: "Version to publish (e.g. 1.0.1)"
         required: true
@@ -42,6 +43,14 @@ jobs:
     if: needs.decide.outputs.type == 'dotnet'
     needs: decide
     uses: ./.github/workflows/publish-dotnet.yml
+    with:
+      package: ${{ github.event.inputs.package }}
+      version: ${{ github.event.inputs.version }}
+  
+  call-npm:
+    if: needs.decide.outputs.type == 'npm'
+    needs: decide
+    uses: ./.github/workflows/publish-npm.yml
     with:
       package: ${{ github.event.inputs.package }}
       version: ${{ github.event.inputs.version }}
