@@ -1,5 +1,9 @@
 name: Publish Package
 
+permissions:
+  contents: write # allow committing/tags if you need it
+  packages: write # allow pushing packages using GITHUB_TOKEN
+
 on:
   workflow_dispatch:
     inputs:
