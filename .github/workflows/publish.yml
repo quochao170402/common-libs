@@ -22,78 +22,53 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣  Check out repository
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Git user (for version commit)
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
+      # 2️⃣  Detect package type (dotnet or npm)
       - name: Detect package type
         id: detect
         run: |
-          if [[ "${{ github.event.inputs.package }}" == dotnet/* ]]; then
-            echo "type=dotnet" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.event.inputs.package }}" == nest/* ]]; then
+          if [ -f "${{ github.event.inputs.package }}/package.json" ]; then
             echo "type=npm" >> $GITHUB_OUTPUT
+          elif ls "${{ github.event.inputs.package }}"/*.csproj >/dev/null 2>&1; then
+            echo "type=dotnet" >> $GITHUB_OUTPUT
           else
-            echo "Unknown package type"; exit 1
+            echo "Could not detect package type"
+            exit 1
           fi
 
-      # ---------- Set version manually ----------
-      - name: Set .NET version
-        if: steps.detect.outputs.type == 'dotnet'
-        working-directory: ${{ github.event.inputs.package }}
-        run: |
-          # update <Version> tag in the main csproj
-          csproj=$(find . -maxdepth 1 -name "*.csproj" | head -n1)
-          echo "Updating $csproj to version ${{ github.event.inputs.version }}"
-          dotnet tool install --global dotnet-version-cli --version 1.*
-          export PATH="$PATH:~/.dotnet/tools"
-          dotnet version set ${{ github.event.inputs.version }} --file "$csproj" --skip-commit
-
-      - name: Set npm version
-        if: steps.detect.outputs.type == 'npm'
-        working-directory: ${{ github.event.inputs.package }}
-        run: |
-          npm version ${{ github.event.inputs.version }} --no-git-tag-version
-
-      - name: Commit version change
-        run: |
-          git add ${{ github.event.inputs.package }}
-          git commit -m "chore: set ${{ github.event.inputs.package }} version to ${{ github.event.inputs.version }} [skip ci]"
-          git push
-
-      # ---------- Publish .NET NuGet ----------
+      # 3️⃣  .NET package build & publish
       - name: Setup .NET
         if: steps.detect.outputs.type == 'dotnet'
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.x'
+          dotnet-version: '8.0.x'
 
-      - name: Publish NuGet to GitHub Packages
+      - name: Pack & publish NuGet
         if: steps.detect.outputs.type == 'dotnet'
         working-directory: ${{ github.event.inputs.package }}
         run: |
+          dotnet restore
           dotnet pack -c Release /p:PackageVersion=${{ github.event.inputs.version }}
           dotnet nuget push "bin/Release/*.nupkg" \
             --api-key ${{ secrets.GITHUB_TOKEN }} \
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
 
-      # ---------- Publish NPM ----------
-      - name: Setup Node.js
+      # 4️⃣  npm package build & publish
+      - name: Setup Node
         if: steps.detect.outputs.type == 'npm'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           registry-url: 'https://npm.pkg.github.com'
 
-      - name: Publish to GitHub npm registry
+      - name: Publish npm
         if: steps.detect.outputs.type == 'npm'
         working-directory: ${{ github.event.inputs.package }}
         run: |
-          npm install
-          npm publish
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
