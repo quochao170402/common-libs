@@ -9,12 +9,12 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: read # only need to read code
-
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
