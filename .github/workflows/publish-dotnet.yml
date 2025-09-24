@@ -1,0 +1,37 @@
+name: Publish .NET Package
+on:
+  workflow_call:
+    inputs:
+      package:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+
+permissions:
+  contents: read # only need to read code
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build & Pack
+        working-directory: ${{ inputs.package }}
+        run: |
+          dotnet restore
+          dotnet build -c Release
+          rm -f bin/Release/*.nupkg
+          dotnet pack -c Release /p:PackageVersion=${{ github.event.inputs.version }} --no-build
+
+      - name: Push to GitHub Packages
+        working-directory: ${{ inputs.package }}
+        run: |
+          dotnet nuget push "bin/Release/*.nupkg" \
+            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+            --api-key ${{ secrets.GITHUB_TOKEN }}

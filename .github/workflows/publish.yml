@@ -1,10 +1,10 @@
-name: Publish package
+name: Publish Package
 
 on:
   workflow_dispatch:
     inputs:
       package:
-        description: 'Package to publish (relative path from repo root)'
+        description: "Package path (relative to repo root)"
         required: true
         type: choice
         options:
@@ -13,67 +13,40 @@ on:
           - nest/observability-npm
           - nest/messing-npm
       version:
-        description: 'Exact version to publish (e.g. 1.2.3)'
+        description: "Version to publish (e.g. 1.2.3)"
         required: true
         type: string
 
 jobs:
-  publish:
+  decide:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    outputs:
+      type: ${{ steps.detect.outputs.type }}
     steps:
-      # 1️⃣  Check out repository
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # 2️⃣  Detect package type (dotnet or npm)
-      - name: Detect package type
-        id: detect
+      - uses: actions/checkout@v4
+      - id: detect
         run: |
           if [ -f "${{ github.event.inputs.package }}/package.json" ]; then
-            echo "type=npm" >> $GITHUB_OUTPUT
+            echo "type=npm" >> "$GITHUB_OUTPUT"
           elif ls "${{ github.event.inputs.package }}"/*.csproj >/dev/null 2>&1; then
-            echo "type=dotnet" >> $GITHUB_OUTPUT
+            echo "type=dotnet" >> "$GITHUB_OUTPUT"
           else
-            echo "Could not detect package type"
+            echo "type=unknown" >> "$GITHUB_OUTPUT"
             exit 1
           fi
 
-      # 3️⃣  .NET package build & publish
-      - name: Setup .NET
-        if: steps.detect.outputs.type == 'dotnet'
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
+  call-dotnet:
+    if: needs.decide.outputs.type == 'dotnet'
+    needs: decide
+    uses: ./.github/workflows/publish-dotnet.yml
+    with:
+      package: ${{ github.event.inputs.package }}
+      version: ${{ github.event.inputs.version }}
 
-      - name: Build & Pack NuGet
-        if: steps.detect.outputs.type == 'dotnet'
-        working-directory: ${{ github.event.inputs.package }}
-        run: |
-          dotnet restore
-          dotnet build -c Release
-          rm -f bin/Release/*.nupkg          # clean old
-          dotnet pack -c Release /p:PackageVersion=${{ github.event.inputs.version }} --no-build
-          dotnet nuget push "bin/Release/*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
-
-
-      
-      
-      # 4️⃣  npm package build & publish
-      - name: Setup Node
-        if: steps.detect.outputs.type == 'npm'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://npm.pkg.github.com'
-
-      - name: Publish npm
-        if: steps.detect.outputs.type == 'npm'
-        working-directory: ${{ github.event.inputs.package }}
-        run: |
-          npm version ${{ github.event.inputs.version }} --no-git-tag-version
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  call-npm:
+    if: needs.decide.outputs.type == 'npm'
+    needs: decide
+    uses: ./.github/workflows/publish-npm.yml
+    with:
+      package: ${{ github.event.inputs.package }}
+      version: ${{ github.event.inputs.version }}
