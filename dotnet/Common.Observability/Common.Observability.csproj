@@ -34,6 +34,10 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="README.md" Pack="true" PackagePath="\"/>
+        <None Include="README.md"
+        Pack="true"
+        PackagePath="\"   <!-- place in root of .nupkg -->
+        Link="README.md"  <!-- keep file name -->
+        Visible="false" />
     </ItemGroup>
 </Project>
