@@ -11,10 +11,10 @@ namespace Common.Observability;
 /// other fields fine-tune error reporting, performance monitoring,
 /// and privacy preferences.
 /// </summary>
-/// <remarks>
-/// See the official Sentry .NET SDK options documentation for full details:
+/// <remarks arks>
+/// See the offic ial Sentry .NET SDK options documentation for full details:
 /// https://docs.sentry.io/platforms/dotnet/configuration/options/
-/// </remarks>
+/// </remarks> 
 public class SentryMonitorOptions
 {
     #region Required / Core
