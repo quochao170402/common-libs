@@ -6,12 +6,12 @@ on:
       package:
         required: true
         type: string
-      version:
-        required: true
+      bump:
+        required: false
         type: string
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
@@ -19,21 +19,61 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed for tagging
+
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
+
+      - name: Determine Version
+        id: ver
+        working-directory: ${{ inputs.package }}
+        run: |
+          # Default bump type is patch
+          BUMP="${{ inputs.bump }}"
+          if [ -z "$BUMP" ]; then
+            BUMP="patch"
+          fi
+
+          # Read current <Version> from csproj
+          CURRENT=$(grep -oPm1 "(?<=<Version>)[^<]+" *.csproj)
+          echo "Current version: $CURRENT"
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR+1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH+1)) ;;
+          esac
+
+          NEXT="$MAJOR.$MINOR.$PATCH"
+          echo "next=$NEXT" >> $GITHUB_OUTPUT
+          echo "Next version: $NEXT"
+
+          # Update csproj
+          sed -i "s|<Version>.*</Version>|<Version>$NEXT</Version>|" *.csproj
 
       - name: Build & Pack
         working-directory: ${{ inputs.package }}
         run: |
           dotnet restore
           dotnet build -c Release
-          rm -f bin/Release/*.nupkg
-          dotnet pack -c Release /p:PackageVersion=${{ github.event.inputs.version }} --no-build
+          dotnet pack -c Release /p:PackageVersion=${{ steps.ver.outputs.next }} --no-build
 
       - name: Push to GitHub Packages
         working-directory: ${{ inputs.package }}
         run: |
-          dotnet nuget push "bin/Release/*.nupkg" \
+          lib=$(basename "${{ inputs.package }}")
+          dotnet nuget push "bin/Release/${lib}.${{ steps.ver.outputs.next }}.nupkg" \
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
             --api-key ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit and Tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git commit -am "Bump ${{ inputs.package }} to v${{ steps.ver.outputs.next }}"
+          git tag v${{ steps.ver.outputs.next }}
+          git push --follow-tags

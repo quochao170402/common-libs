@@ -1,10 +1,9 @@
 name: Publish Packages
-
-run-name: Publish package ${{ github.event.inputs.package  }} by @${{ github.actor }}
+run-name: Publish ${{ github.event.inputs.package }} by @${{ github.actor }}
 
 permissions:
-  contents: write # allow committing/tags if you need it
-  packages: write # allow pushing packages using GITHUB_TOKEN
+  contents: write
+  packages: write
 
 on:
   workflow_dispatch:
@@ -16,10 +15,14 @@ on:
         options:
           - dotnet/Common.Observability
           - npm/common-observability
-      version:
-        description: "Version to publish (e.g. 1.0.1)"
-        required: true
-        type: string
+      bump:
+        description: "Version bump type (patch/minor/major)"
+        required: false
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 jobs:
   decide:
@@ -27,21 +30,16 @@ jobs:
     outputs:
       type: ${{ steps.detect.outputs.type }}
     steps:
-      - uses: actions/checkout@v4
       - id: detect
         run: |
           pkg="${{ github.event.inputs.package }}"
-          # Grab the first path segment (before the first /)
           top="${pkg%%/*}"
-
           if [ "$top" = "dotnet" ]; then
             echo "type=dotnet" >> "$GITHUB_OUTPUT"
-          elif [ "$top" = "nest" ] || [ "$top" = "npm" ] || [ "$top" = "node" ]; then
+          elif [ "$top" = "npm" ]; then
             echo "type=npm" >> "$GITHUB_OUTPUT"
           else
-            echo "type=unknown" >> "$GITHUB_OUTPUT"
-            exit 1
-          fi
+            echo "type=unknown" >> "$GITHUB_OUTPUT"; exit 1
 
   call-dotnet:
     if: needs.decide.outputs.type == 'dotnet'
@@ -49,12 +47,4 @@ jobs:
     uses: ./.github/workflows/publish-dotnet.yml
     with:
       package: ${{ github.event.inputs.package }}
-      version: ${{ github.event.inputs.version }}
-
-  call-npm:
-    if: needs.decide.outputs.type == 'npm'
-    needs: decide
-    uses: ./.github/workflows/publish-npm.yml
-    with:
-      package: ${{ github.event.inputs.package }}
-      version: ${{ github.event.inputs.version }}
+      bump: ${{ github.event.inputs.bump }}
