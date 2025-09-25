@@ -20,13 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # needed for tagging
 
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
 
-      - name: Determine version
+      - name: Determine Version
         id: ver
         working-directory: ${{ inputs.package }}
         run: |
@@ -36,18 +36,8 @@ jobs:
             BUMP="patch"
           fi
 
-          cd $PWD
-
-          # Find last nupkg
-          NUPKG_FILE=$(ls bin/Release/*.nupkg 2>/dev/null | sort -V | tail -n1 || true)
-
-          if [ -z "$NUPKG_FILE" ]; then
-            CURRENT="1.0.0"
-          else
-            BASENAME=$(basename "$NUPKG_FILE")
-            CURRENT=$(echo "$BASENAME" | sed -E 's/.*\.([0-9]+\.[0-9]+\.[0-9]+)\.nupkg/\1/')
-          fi
-
+          # Read current <Version> from csproj
+          CURRENT=$(grep -oPm1 "(?<=<Version>)[^<]+" *.csproj)
           echo "Current version: $CURRENT"
 
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
@@ -59,38 +49,31 @@ jobs:
           esac
 
           NEXT="$MAJOR.$MINOR.$PATCH"
+          echo "next=$NEXT" >> $GITHUB_OUTPUT
           echo "Next version: $NEXT"
-          echo "NEXT_VERSION=$NEXT" >> $GITHUB_ENV
 
-          # Update csproj if exists
-          CSPROJ_FILE=$(ls *.csproj | head -n1 || true)
-          if [ -n "$CSPROJ_FILE" ]; then
-            if grep -q "<Version>" "$CSPROJ_FILE"; then
-              sed -i "s|<Version>.*</Version>|<Version>$NEXT</Version>|" "$CSPROJ_FILE"
-            else
-              sed -i "0,/<PropertyGroup>/s|<PropertyGroup>|<PropertyGroup>\n  <Version>$NEXT</Version>|" "$CSPROJ_FILE"
-            fi
-          fi
+          # Update csproj
+          sed -i "s|<Version>.*</Version>|<Version>$NEXT</Version>|" *.csproj
 
       - name: Build & Pack
         working-directory: ${{ inputs.package }}
         run: |
           dotnet restore
           dotnet build -c Release
-          dotnet pack -c Release /p:PackageVersion=${{ env.NEXT_VERSION }} --no-build
+          dotnet pack -c Release /p:PackageVersion=${{ steps.ver.outputs.next }} --no-build
 
       - name: Push to GitHub Packages
         working-directory: ${{ inputs.package }}
         run: |
           lib=$(basename "${{ inputs.package }}")
-          dotnet nuget push "bin/Release/${lib}.${{ env.NEXT_VERSION }}.nupkg" \
+          dotnet nuget push "bin/Release/${lib}.${{ steps.ver.outputs.next }}.nupkg" \
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
             --api-key ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Commit & Tag
+      - name: Commit and Tag
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git commit -am "Bump ${{ inputs.package }} to v${{ env.NEXT_VERSION }}"
-          git tag v${{ env.NEXT_VERSION }}
+          git commit -am "Bump ${{ inputs.package }} to v${{ steps.ver.outputs.next }}"
+          git tag v${{ steps.ver.outputs.next }}
           git push --follow-tags

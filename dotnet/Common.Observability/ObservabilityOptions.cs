@@ -8,7 +8,7 @@ public class ObservabilityOptions
 {
     /// <summary>
     /// Enables or disables all observability features.
-    /// Set to <c>true</c> to activate metrics, tracing, and exporters.
+    /// Set to <c>tr ue</c> to activate metrics, tracing, and exporters.
     /// </summary>
     public bool IsEnabled { get; set; } = false;
 
