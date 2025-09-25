@@ -20,10 +20,8 @@ on:
         description: "Version bump (patch/minor/major) or leave empty to skip auto"
         required: false
         type: choice
-        options:
-          - patch
-          - minor
-          - major
+        options: [major, minor, patch]
+        default: patch
 
 jobs:
   decide:
