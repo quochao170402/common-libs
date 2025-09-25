@@ -1,1 +1,0 @@
-# HEROND COMMON
