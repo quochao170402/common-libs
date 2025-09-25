@@ -13,7 +13,7 @@
         <RepositoryType>git</RepositoryType>
         <PackageProjectUrl>https://github.com/quochao170402/Common.Observability.git</PackageProjectUrl>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
