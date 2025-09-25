@@ -19,7 +19,7 @@ namespace Common.Observability;
 public static class ObservabilityExtension
 {
     /// <summary>
-    /// Adds OpenTelemetry services—tracing, metrics, and logging—to the
+    /// Adds OpenTelemetrasdfadsfasdfadsfasdy services—tracing, metrics, and logging—to the
     /// application's dependency injection container.
     /// </summary>
     /// <param name="services">
