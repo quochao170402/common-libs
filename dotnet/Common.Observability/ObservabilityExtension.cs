@@ -175,7 +175,7 @@ public static class ObservabilityExtension
             {
                 sentryOpts.TracesSampleRate = 0;
             }
-
+            System.Console.WriteLine($"Sentry tracing enabled: {options.EnableTracing}, sample rate: {sentryOpts.TracesSampleRate}");
             if (!string.IsNullOrEmpty(options.Environment))
                 sentryOpts.Environment = options.Environment;
 
