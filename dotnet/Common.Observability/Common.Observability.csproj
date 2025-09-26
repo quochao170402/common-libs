@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <PackageId>Common.Observability</PackageId>
-        <Version>0.0.1</Version>
+        <Version>0.0.2</Version>
         <Authors>QuocHao</Authors>
         <Description>Observability extensions with OpenTelemetry and Sentry integration.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
