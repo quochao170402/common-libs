@@ -22,9 +22,7 @@ on:
         type: choice
         options: [major, minor, patch]
         default: patch
-    branches:
-      - master
-      - develop
+    
 jobs:
   decide:
     runs-on: ubuntu-latest
