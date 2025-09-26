@@ -22,7 +22,7 @@ on:
         type: choice
         options: [major, minor, patch]
         default: patch
-    
+
 jobs:
   decide:
     runs-on: ubuntu-latest

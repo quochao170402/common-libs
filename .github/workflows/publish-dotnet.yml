@@ -45,13 +45,11 @@ jobs:
             # Force to stay within 0.0.x
             MAJOR=0
             MINOR=0
-
-            # Ignore bump input and always do patch
             PATCH=$((PATCH + 1))
+
           elif [ "$BRANCH" = "master" ]; then
             echo "⚙️ Running on 'master' branch"
 
-            # Use bump input or default to patch
             BUMP="${{ inputs.bump }}"
             if [ -z "$BUMP" ]; then
               BUMP="patch"
@@ -62,6 +60,7 @@ jobs:
               minor) MINOR=$((MINOR+1)); PATCH=0 ;;
               patch|*) PATCH=$((PATCH+1)) ;;
             esac
+
           else
             echo "❌ Invalid branch: only 'develop' and 'master' are allowed"
             exit 1
