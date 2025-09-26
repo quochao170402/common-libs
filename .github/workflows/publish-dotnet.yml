@@ -30,32 +30,48 @@ jobs:
         id: ver
         working-directory: ${{ inputs.package }}
         run: |
-          # Default bump type is patch
-          BUMP="${{ inputs.bump }}"
-          if [ -z "$BUMP" ]; then
-            BUMP="patch"
-          fi
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          echo "🔀 Branch: $BRANCH"
 
-          # Read current <Version> from csproj
+          # Get current version from csproj
           CURRENT=$(grep -oPm1 "(?<=<Version>)[^<]+" *.csproj)
-          echo "Current version: $CURRENT"
+          echo "📦 Current version: $CURRENT"
 
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
 
-          case "$BUMP" in
-            major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
-            minor) MINOR=$((MINOR+1)); PATCH=0 ;;
-            patch) PATCH=$((PATCH+1)) ;;
-          esac
+          if [ "$BRANCH" = "develop" ]; then
+            echo "⚙️ Running on 'develop' branch"
+
+            # Force to stay within 0.0.x
+            MAJOR=0
+            MINOR=0
+            PATCH=$((PATCH + 1))
+
+          elif [ "$BRANCH" = "master" ]; then
+            echo "⚙️ Running on 'master' branch"
+
+            BUMP="${{ inputs.bump }}"
+            if [ -z "$BUMP" ]; then
+              BUMP="patch"
+            fi
+
+            case "$BUMP" in
+              major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
+              minor) MINOR=$((MINOR+1)); PATCH=0 ;;
+              patch|*) PATCH=$((PATCH+1)) ;;
+            esac
+
+          else
+            echo "❌ Invalid branch: only 'develop' and 'master' are allowed"
+            exit 1
+          fi
 
           NEXT="$MAJOR.$MINOR.$PATCH"
-          echo "next=$NEXT" >> $GITHUB_OUTPUT
-          echo "Next version: $NEXT"
+          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "✅ Next version: $NEXT"
 
-          # Update csproj
+          # Update .csproj with new version
           sed -i "s|<Version>.*</Version>|<Version>$NEXT</Version>|" *.csproj
-
-
 
       - name: Build & Pack
         working-directory: ${{ inputs.package }}
