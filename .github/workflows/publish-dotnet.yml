@@ -30,41 +30,31 @@ jobs:
         id: ver
         working-directory: ${{ inputs.package }}
         run: |
-          BRANCH="${GITHUB_REF#refs/heads/}"
-          echo "Current branch: $BRANCH"
-
-          # Force develop to start at 0.0.x and only allow patch bump
-          if [ "$BRANCH" = "develop" ]; then
+          # Default bump type is patch
+          BUMP="${{ inputs.bump }}"
+          if [ -z "$BUMP" ]; then
             BUMP="patch"
-            BASE="0.0.0"
-          else
-            BUMP="${{ inputs.bump }}"
           fi
 
-          # Read current version from csproj
+          # Read current <Version> from csproj
           CURRENT=$(grep -oPm1 "(?<=<Version>)[^<]+" *.csproj)
-          echo "Current version in csproj: $CURRENT"
-
-          # Use base version if on develop
-          if [ "$BRANCH" = "develop" ]; then
-            CURRENT=${BASE}
-            echo "Resetting version to $CURRENT on develop branch"
-          fi
+          echo "Current version: $CURRENT"
 
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
 
           case "$BUMP" in
             major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
             minor) MINOR=$((MINOR+1)); PATCH=0 ;;
-            patch|""|*) PATCH=$((PATCH+1)) ;;
+            patch) PATCH=$((PATCH+1)) ;;
           esac
 
           NEXT="$MAJOR.$MINOR.$PATCH"
           echo "next=$NEXT" >> $GITHUB_OUTPUT
           echo "Next version: $NEXT"
 
-          # Update csproj with new version
+          # Update csproj
           sed -i "s|<Version>.*</Version>|<Version>$NEXT</Version>|" *.csproj
+
 
 
       - name: Build & Pack
